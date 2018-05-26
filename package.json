@@ -1,7 +1,7 @@
 {
   "name": "psgc2",
-  "version": "2018.3.31-v1",
-  "description": "Philippine Standrard Geographic Code (PSGC)",
+  "version": "2018.3.31-v3",
+  "description": "Official Philippine Standard Geographic Code (PSGC)",
   "main": "index.js",
   "scripts": {
     "build": "node build.js"

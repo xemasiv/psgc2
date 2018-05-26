@@ -55,6 +55,10 @@ try {
     [CONSTS.Dist] : undefined,
     [CONSTS.SubMun] : undefined
   };
+  const r4 = /[0-9]+(,)[0-9]+(,)[0-9]+(,)[0-9]+/;
+  const r3 = /[0-9]+(,)[0-9]+(,)[0-9]+/;
+  const r2 = /[0-9]+(,)[0-9]+/;
+  const r1 = /[0-9]+/;
   while (true) {
     if ( worksheet.hasOwnProperty( 'A'.concat(String(i)) ) === false) {
       console.log('All done, stopped at row', i);
@@ -62,15 +66,48 @@ try {
     }
     if (i % 1000 === 0) console.log('@ row #', i);
     const code = worksheet['A'.concat(String(i))] ? worksheet['A'.concat(String(i))].v : undefined;
-    const name = worksheet['B'.concat(String(i))] ? Case.title(worksheet['B'.concat(String(i))].v) : undefined;
+    let name = worksheet['B'.concat(String(i))] ? worksheet['B'.concat(String(i))].v : undefined;
     const interLevel = worksheet['C'.concat(String(i))] ? worksheet['C'.concat(String(i))].v : undefined;
     const cityClass = worksheet['D'.concat(String(i))] ? worksheet['D'.concat(String(i))].v : undefined;
     const incomeClassification = worksheet['E'.concat(String(i))] ? worksheet['E'.concat(String(i))].v : undefined;
     const urbanRural = worksheet['F'.concat(String(i))] ? worksheet['F'.concat(String(i))].v : undefined;
-    const population = worksheet['G'.concat(String(i))] ? worksheet['G'.concat(String(i))].v : undefined;
+    let population = worksheet['G'.concat(String(i))] ? worksheet['G'.concat(String(i))].v : undefined;
+    let notes;
+    if (typeof population === 'string') {
+      if (population === '-') {
+        population = 0;
+      } else {
+        if (r4.test(population)) {
+          notes = population.split(r4)[0]; // billions
+        } else if (r3.test(population)) {
+          notes = population.split(r3)[0]; // millions
+        } else if (r2.test(population)) {
+          notes = population.split(r2)[0]; // thousands
+        } else if (r1.test(population)) {
+          notes = population.split(r1)[0]; // hundreds
+        } else {
+          console.log('Unparsed population at row', i, {
+            code, name, interLevel, cityClass, incomeClassification, urbanRural, population
+          });
+        }
+        population = population.replace(notes, '');
+        population = population.replace(',', '');
+        population = population.replace(' ', '');
+        population = parseInt(population.trim());
+        notes = notes.trim();
+        notes.split(' ').map((word) => {
+          notes = notes.replace(word, Case.title(word));
+        });
+      }
+    }
 
     const row = { code, name, interLevel, cityClass, incomeClassification, urbanRural, population };
     raw.push(row);
+    if (interLevel !== CONSTS.Reg && interLevel !== CONSTS.Bgy) {
+      name.split(' ').map((word) => {
+        name = name.replace(word, Case.title(word));
+      });
+    }
     switch (interLevel) {
       case CONSTS.Reg:
         CURRENT[CONSTS.Reg] = name;
@@ -83,9 +120,11 @@ try {
         var data = {
           population
         };
+        if (notes) data = { ...data, notes };
         tree [CURRENT[CONSTS.Reg]] = data;
 
         var region = { name };
+        if (notes) region = { ...region, notes };
         regions.push(name);
         break;
       case CONSTS.Prov:
@@ -98,12 +137,14 @@ try {
         var data = {
           population
         };
+        if (notes) data = { ...data, notes };
         tree [CURRENT[CONSTS.Reg]] [CURRENT[CONSTS.Prov]] = data;
 
         var province = {
           name, population,
           region: CURRENT[CONSTS.Reg]
         };
+        if (notes) province = { ...province, notes };
         provinces.push(province);
         break;
       case CONSTS.City:
@@ -117,6 +158,7 @@ try {
           cityClass: CITY_CLASSES[cityClass],
           population
         };
+        if (notes) data = { ...data, notes };
         var path = tree[CURRENT[CONSTS.Reg]];
         if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
         path [CURRENT[CONSTS.City]] = data;
@@ -125,6 +167,7 @@ try {
           name, population,
           region: CURRENT[CONSTS.Reg]
         };
+        if (notes) city = { ...city, notes };
         if (CURRENT[CONSTS.Prov] !== undefined) city = { ...city, province: CURRENT[CONSTS.Prov] };
         cities.push(city);
         break;
@@ -138,6 +181,7 @@ try {
           class: 'Municipality',
           population
         };
+        if (notes) data = { ...data, notes };
         var path = tree[CURRENT[CONSTS.Reg]];
         if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
         path [CURRENT[CONSTS.Mun]] = data;
@@ -147,6 +191,7 @@ try {
           name, population,
           region: CURRENT[CONSTS.Reg]
         };
+        if (notes) municipality = { ...municipality, notes };
         if (CURRENT[CONSTS.Prov] !== undefined) municipality = { ...municipality, province: CURRENT[CONSTS.Prov] };
         municipalities.push(municipality);
         break;
@@ -161,6 +206,7 @@ try {
         var data = {
           population
         };
+        if (notes) data = { ...data, notes };
         var path = tree[CURRENT[CONSTS.Reg]];
         if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
         if (CURRENT[CONSTS.City] !== undefined) path = path[CURRENT[CONSTS.City]];
@@ -170,6 +216,8 @@ try {
         path [CURRENT[CONSTS.Bgy]] = data;
         break;
       default:
+        console.log('Empty row skipped:', i);
+        console.log(row);
         break;
     }
     i++;
