@@ -1,6 +1,6 @@
 {
   "name": "psgc2",
-  "version": "2.0.1",
+  "version": "2018.3.31",
   "description": "Philippine Standrard Geographic Code (PSGC)",
   "main": "index.js",
   "scripts": {

@@ -10,8 +10,9 @@ This library allows you to:
 const psgc2 = require('psgc2');
 // Documented below
 ```
-2. Parse & generate latest JSON's from the official PSGC Excel (xlsx) file provided quarterly by the Philippine Statistics Authority (PSA).
+2. Parse & generate latest JSON's from the official PSGC Excel (xlsx) file provided quarterly by the Philippine Statistics Authority (PSA) at http://nap.psa.gov.ph/activestats/psgc/default.asp.
 ```
+// configure xlsx path first @ /build.js, then:
 npm run build
 ```
 
@@ -105,6 +106,11 @@ None
 Acknowledgement of the Philippine Statistics Authority (PSA) as the source
 
 ---
+
+## Versioning
+
+Since this package is date-sensitive, version is based from the format:
+*  **YEAR . MONTH . DATE**, such as 2018.3.31.
 
 ## License (psgc2 library)
 
