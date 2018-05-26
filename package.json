@@ -1,0 +1,29 @@
+{
+  "name": "psgc2",
+  "version": "1.0.0",
+  "description": "Philippine Standrard Geographic Code (PSGC)",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xemasiv/psgc2.git"
+  },
+  "keywords": [
+    "philippine",
+    "regions",
+    "provinces",
+    "cities",
+    "municipalities"
+  ],
+  "author": "",
+  "license": "CC-BY-4.0",
+  "bugs": {
+    "url": "https://github.com/xemasiv/psgc2/issues"
+  },
+  "homepage": "https://github.com/xemasiv/psgc2#readme",
+  "devDependencies": {
+    "xlsx": "^0.12.13"
+  }
+}
