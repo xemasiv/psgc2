@@ -1,6 +1,6 @@
 const xlsx = require('xlsx');
 
-const CONSTANTS = {
+const CONSTS = {
   CC: 'CC',
   ICC: 'ICC',
   HUC: 'HUC',
@@ -13,38 +13,41 @@ const CONSTANTS = {
   SubMun: 'SubMun'
 };
 const CITY_CLASSES = {
-  [CONSTANTS.CC]    : 'Component City',
-  [CONSTANTS.ICC]   : 'Independent Component City',
-  [CONSTANTS.HUC]   : 'Highly Urbanized City'
+  [CONSTS.CC]    : 'Component City',
+  [CONSTS.ICC]   : 'Independent Component City',
+  [CONSTS.HUC]   : 'Highly Urbanized City'
 };
 const INTER_LEVELS = {
-  [CONSTANTS.Reg]     : 'Region',
-  [CONSTANTS.Prov]    : 'Province',
-  [CONSTANTS.Mun]     : 'Municipality',
-  [CONSTANTS.Bgy]     : 'Barangay',
-  [CONSTANTS.City]    : 'City',
-  [CONSTANTS.Dist]    : 'District',
-  [CONSTANTS.SubMun]  : 'Sub-municipality'
+  [CONSTS.Reg]     : 'Region',
+  [CONSTS.Prov]    : 'Province',
+  [CONSTS.Mun]     : 'Municipality',
+  [CONSTS.Bgy]     : 'Barangay',
+  [CONSTS.City]    : 'City',
+  [CONSTS.Dist]    : 'District',
+  [CONSTS.SubMun]  : 'Sub-municipality'
 };
 
 
 try {
+
   console.log('Reading workbook..');
   const workbook = xlsx.readFile('./src/PSGC Publication Mar2018.xlsx');
+
   console.log('Reading worksheet..');
   const worksheet = workbook.Sheets['PSGC'];
-  let i = 2;
-  let raw = [];
-  console.log('Reading rows..');
 
+  console.log('Reading rows..');
+  let i = 2;
+  let all = [];
+  let tree = {};
   let CURRENT = {
-    [CONSTANTS.Reg] : undefined,
-    [CONSTANTS.Prov] : undefined,
-    [CONSTANTS.Mun] : undefined,
-    [CONSTANTS.Bgy] : undefined,
-    [CONSTANTS.City] : undefined,
-    [CONSTANTS.Dist] : undefined,
-    [CONSTANTS.SubMun] : undefined
+    [CONSTS.Reg] : undefined,
+    [CONSTS.Prov] : undefined,
+    [CONSTS.Mun] : undefined,
+    [CONSTS.Bgy] : undefined,
+    [CONSTS.City] : undefined,
+    [CONSTS.Dist] : undefined,
+    [CONSTS.SubMun] : undefined
   };
   while (true) {
     if ( worksheet.hasOwnProperty( 'A'.concat(String(i)) ) === false) {
@@ -59,32 +62,91 @@ try {
     const incomeClassification = worksheet['E'.concat(String(i))] ? worksheet['E'.concat(String(i))].v : undefined;
     const urbanRural = worksheet['F'.concat(String(i))] ? worksheet['F'.concat(String(i))].v : undefined;
     const population = worksheet['G'.concat(String(i))] ? worksheet['G'.concat(String(i))].v : undefined;
-    raw.push({ code, name, interLevel, cityClass, incomeClassification, urbanRural, population });
+    const row = { code, name, interLevel, cityClass, incomeClassification, urbanRural, population };
+    all.push(row);
+    if (CURRENT['type'] !== interLevel) {
+      // console.log(CURRENT['rollover'], INTER_LEVELS[ CURRENT['type'] ]);
+      CURRENT['type'] = interLevel;
+      CURRENT['rollover'] = 1;
+    } else {
+      CURRENT['rollover'] = CURRENT['rollover'] + 1;
+    }
     switch (interLevel) {
-      case CONSTANTS.Reg:
-        CURRENT[CONSTANTS.Reg] === name;
-        console.log('@ REGION:', name);
+      case CONSTS.Reg:
+        CURRENT[CONSTS.Reg] = name;
+        CURRENT[CONSTS.Prov] = undefined;
+        CURRENT[CONSTS.City] = undefined;
+        CURRENT[CONSTS.Mun] = undefined;
+        CURRENT[CONSTS.Dist] = undefined;
+        CURRENT[CONSTS.SubMun] = undefined;
+        CURRENT[CONSTS.Bgy] = undefined;
+        var data = {
+          population
+        };
+        tree [CURRENT[CONSTS.Reg]] = data;
         break;
-      case CONSTANTS.Prov:
-        CURRENT[CONSTANTS.Prov] === name;
-        console.log('@@ PROVINCE:', name);
+      case CONSTS.Prov:
+        CURRENT[CONSTS.Prov] = name;
+        CURRENT[CONSTS.City] = undefined;
+        CURRENT[CONSTS.Mun] = undefined;
+        CURRENT[CONSTS.Dist] = undefined;
+        CURRENT[CONSTS.SubMun] = undefined;
+        CURRENT[CONSTS.Bgy] = undefined;
+        var data = {
+          population
+        };
+        tree [CURRENT[CONSTS.Reg]] [CURRENT[CONSTS.Prov]] = data;
         break;
-      case CONSTANTS.Mun:
-        CURRENT[CONSTANTS.Mun] === name;
-        console.log('@@@ MUNICIPALITY:', name);
+      case CONSTS.City:
+        CURRENT[CONSTS.City] = name;
+        CURRENT[CONSTS.Mun] = undefined;
+        CURRENT[CONSTS.Dist] = undefined;
+        CURRENT[CONSTS.SubMun] = undefined;
+        CURRENT[CONSTS.Bgy] = undefined;
+        var data = {
+          class: 'City',
+          cityClass: CITY_CLASSES[cityClass],
+          population
+        };
+        var path = tree[CURRENT[CONSTS.Reg]];
+        if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
+        path [CURRENT[CONSTS.City]] = data;
         break;
-      case CONSTANTS.Bgy:
+      case CONSTS.Mun:
+        // console.log('@@@ MUNICIPALITY:', name);
+        CURRENT[CONSTS.Mun] = name;
+        CURRENT[CONSTS.City] = undefined;
+        CURRENT[CONSTS.Dist] = undefined;
+        CURRENT[CONSTS.SubMun] = undefined;
+        CURRENT[CONSTS.Bgy] = undefined;
+        var data = {
+          class: 'Municipality',
+          population
+        };
+        var path = tree[CURRENT[CONSTS.Reg]];
+        if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
+        path [CURRENT[CONSTS.Mun]] = data;
         break;
-      case CONSTANTS.City:
-        CURRENT[CONSTANTS.City] === name;
-        console.log('@@@ CITY:', name);
+      case CONSTS.Dist:
+        CURRENT[CONSTS.Dist] = name;
         break;
-      case CONSTANTS.Dist:
+      case CONSTS.SubMun:
+        CURRENT[CONSTS.SubMun] = name;
         break;
-      case CONSTANTS.SubMun:
+      case CONSTS.Bgy:
+        CURRENT[CONSTS.Bgy] = name;
+        var data = {
+          population
+        };
+        var path = tree[CURRENT[CONSTS.Reg]];
+        if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
+        if (CURRENT[CONSTS.City] !== undefined) path = path[CURRENT[CONSTS.City]];
+        if (CURRENT[CONSTS.Mun] !== undefined) path = path[CURRENT[CONSTS.Mun]];
+        if (CURRENT[CONSTS.Dist] !== undefined) data = { ...data, district: CURRENT[CONSTS.Dist] };
+        if (CURRENT[CONSTS.SubMun] !== undefined) data = { ...data, subMunicipality: CURRENT[CONSTS.SubMun] };
+        path [CURRENT[CONSTS.Bgy]] = data;
         break;
       default:
-        console.log('Unexpected Inter-Level at row', i, ':', interLevel);
         break;
     }
     i++;
@@ -92,4 +154,5 @@ try {
 
 } catch (e) {
   console.log(String(e));
+  console.log(e);
 }
