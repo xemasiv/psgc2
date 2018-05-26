@@ -1,4 +1,6 @@
+const fs = require('fs');
 const xlsx = require('xlsx');
+const Case = require('case');
 
 const CONSTS = {
   CC: 'CC',
@@ -38,8 +40,12 @@ try {
 
   console.log('Reading rows..');
   let i = 2;
-  let all = [];
+  let raw = [];
   let tree = {};
+  let regions = [];
+  let provinces = [];
+  let cities = [];
+  let municipalities = [];
   let CURRENT = {
     [CONSTS.Reg] : undefined,
     [CONSTS.Prov] : undefined,
@@ -54,23 +60,17 @@ try {
       console.log('All done, stopped at row', i);
       break;
     }
-    // if (i % 1000 === 0) console.log('@ ROW', i);
+    if (i % 1000 === 0) console.log('@ row #', i);
     const code = worksheet['A'.concat(String(i))] ? worksheet['A'.concat(String(i))].v : undefined;
-    const name = worksheet['B'.concat(String(i))] ? worksheet['B'.concat(String(i))].v : undefined;
+    const name = worksheet['B'.concat(String(i))] ? Case.title(worksheet['B'.concat(String(i))].v) : undefined;
     const interLevel = worksheet['C'.concat(String(i))] ? worksheet['C'.concat(String(i))].v : undefined;
     const cityClass = worksheet['D'.concat(String(i))] ? worksheet['D'.concat(String(i))].v : undefined;
     const incomeClassification = worksheet['E'.concat(String(i))] ? worksheet['E'.concat(String(i))].v : undefined;
     const urbanRural = worksheet['F'.concat(String(i))] ? worksheet['F'.concat(String(i))].v : undefined;
     const population = worksheet['G'.concat(String(i))] ? worksheet['G'.concat(String(i))].v : undefined;
+
     const row = { code, name, interLevel, cityClass, incomeClassification, urbanRural, population };
-    all.push(row);
-    if (CURRENT['type'] !== interLevel) {
-      // console.log(CURRENT['rollover'], INTER_LEVELS[ CURRENT['type'] ]);
-      CURRENT['type'] = interLevel;
-      CURRENT['rollover'] = 1;
-    } else {
-      CURRENT['rollover'] = CURRENT['rollover'] + 1;
-    }
+    raw.push(row);
     switch (interLevel) {
       case CONSTS.Reg:
         CURRENT[CONSTS.Reg] = name;
@@ -84,6 +84,9 @@ try {
           population
         };
         tree [CURRENT[CONSTS.Reg]] = data;
+
+        var region = { name };
+        regions.push(name);
         break;
       case CONSTS.Prov:
         CURRENT[CONSTS.Prov] = name;
@@ -96,6 +99,12 @@ try {
           population
         };
         tree [CURRENT[CONSTS.Reg]] [CURRENT[CONSTS.Prov]] = data;
+
+        var province = {
+          name, population,
+          region: CURRENT[CONSTS.Reg]
+        };
+        provinces.push(province);
         break;
       case CONSTS.City:
         CURRENT[CONSTS.City] = name;
@@ -111,9 +120,15 @@ try {
         var path = tree[CURRENT[CONSTS.Reg]];
         if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
         path [CURRENT[CONSTS.City]] = data;
+
+        var city = {
+          name, population,
+          region: CURRENT[CONSTS.Reg]
+        };
+        if (CURRENT[CONSTS.Prov] !== undefined) city = { ...city, province: CURRENT[CONSTS.Prov] };
+        cities.push(city);
         break;
       case CONSTS.Mun:
-        // console.log('@@@ MUNICIPALITY:', name);
         CURRENT[CONSTS.Mun] = name;
         CURRENT[CONSTS.City] = undefined;
         CURRENT[CONSTS.Dist] = undefined;
@@ -126,6 +141,14 @@ try {
         var path = tree[CURRENT[CONSTS.Reg]];
         if (CURRENT[CONSTS.Prov] !== undefined) path = path[CURRENT[CONSTS.Prov]];
         path [CURRENT[CONSTS.Mun]] = data;
+
+
+        var municipality = {
+          name, population,
+          region: CURRENT[CONSTS.Reg]
+        };
+        if (CURRENT[CONSTS.Prov] !== undefined) municipality = { ...municipality, province: CURRENT[CONSTS.Prov] };
+        municipalities.push(municipality);
         break;
       case CONSTS.Dist:
         CURRENT[CONSTS.Dist] = name;
@@ -151,7 +174,12 @@ try {
     }
     i++;
   }
-
+  fs.writeFile('./tree.json', JSON.stringify(tree), 'utf8', () => console.log('tree.json saved.'));
+  fs.writeFile('./raw.json', JSON.stringify(raw), 'utf8', () => console.log('raw.json saved.'));
+  fs.writeFile('./regions.json', JSON.stringify(regions), 'utf8', () => console.log('regions.json saved.'));
+  fs.writeFile('./provinces.json', JSON.stringify(provinces), 'utf8', () => console.log('provinces.json saved.'));
+  fs.writeFile('./cities.json', JSON.stringify(cities), 'utf8', () => console.log('cities.json saved.'));
+  fs.writeFile('./municipalities.json', JSON.stringify(municipalities), 'utf8', () => console.log('municipalities.json saved.'));
 } catch (e) {
   console.log(String(e));
   console.log(e);

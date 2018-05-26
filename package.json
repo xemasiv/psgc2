@@ -1,6 +1,6 @@
 {
   "name": "psgc2",
-  "version": "1.0.0",
+  "version": "2.0.1",
   "description": "Philippine Standrard Geographic Code (PSGC)",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/xemasiv/psgc2#readme",
   "devDependencies": {
+    "case": "^1.5.5",
     "xlsx": "^0.12.13"
   }
 }

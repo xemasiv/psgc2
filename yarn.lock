@@ -9,6 +9,10 @@ adler-32@~1.2.0:
     exit-on-epipe "~1.0.1"
     printj "~1.1.0"
 
+case@^1.5.5:
+  version "1.5.5"
+  resolved "https://registry.yarnpkg.com/case/-/case-1.5.5.tgz#8e832ef0329609a4f3198dee37c029645dc27c72"
+
 cfb@~1.0.7:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/cfb/-/cfb-1.0.7.tgz#ccb615eb1bb0a039e7829ab0b2ad4ea564fbaa78"
