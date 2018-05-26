@@ -71,11 +71,11 @@ const psgc2 = require('psgc2');
   * **province** *String*, province name
   * **region** *String*, region name
 
-  #### `psgc2.municipalities`, `~/psgc2/municipalities.json` *Array*
-  * *Object*
-    * **name** *String*, municipality name
-    * **province** *String*, province name
-    * **region** *String*, region name
+#### `psgc2.municipalities`, `~/psgc2/municipalities.json` *Array*
+* *Object*
+  * **name** *String*, municipality name
+  * **province** *String*, province name
+  * **region** *String*, region name
 
 ---
 
