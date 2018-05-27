@@ -125,7 +125,7 @@ try {
 
         var region = { name };
         if (notes) region = { ...region, notes };
-        regions.push(name);
+        regions.push(region);
         break;
       case CONSTS.Prov:
         CURRENT[CONSTS.Prov] = name;

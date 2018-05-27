@@ -92,6 +92,8 @@ const psgc2 = require('psgc2');
 
 ## Changelog
 
+* **2018.3.31-v4**
+  * Fixed `regions.json` structure, from *String* -> *Object*.
 * **2018.3.31-v3**
   * Regex-based approach on parsing **population** field.
   * **Population** field is now a purely *Integer* field.
